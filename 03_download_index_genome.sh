@@ -22,5 +22,11 @@ REF_DIR="/home/FCAM/afrutos/ISG/Final_project2025/ferret"
 GENOME_FA="$REF_DIR/Mustela_putorius_furo.MusPutFur1.0.dna.toplevel.fa"
 OUT_PREFIX="$REF_DIR/MusPutFur1.0_index"
 
+# Download and unzip ferret genome
+mkdir -p $REF_DIR
+cd $REF_DIR
+wget https://ftp.ensembl.org/pub/release-115/fasta/mustela_putorius_furo/dna/Mustela_putorius_furo.MusPutFur1.0.dna.toplevel.fa.gz
+gunzip Mustela_putorius_furo.MusPutFur1.0.dna.toplevel.fa.gz
+
 # Build index
 hisat2-build -p 8 $GENOME_FA $OUT_PREFIX
