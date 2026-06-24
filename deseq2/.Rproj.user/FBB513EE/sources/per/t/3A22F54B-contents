@@ -1,0 +1,379 @@
+---
+title: "ISG Final"
+author: "Alex Frutos"
+format: pdf
+editor: visual
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(DESeq2)
+library(pheatmap)
+
+#----------------------------------------------------------
+# 1. Load metadata
+#----------------------------------------------------------
+meta <- read.csv("SraRunTable_fix.csv") %>%
+  select(Run, age_group, time, treatment, tissue)
+meta <- meta %>% filter(Run != "SRR17047793")
+
+# Check first rows
+head(meta)
+
+#----------------------------------------------------------
+# 2. Load HTSeq count files
+#----------------------------------------------------------
+count_dir <- "counts"
+sampleFiles <- list.files(count_dir, pattern="*.txt")
+
+# Remove the ".counts.txt" part
+sampleNames <- str_remove(sampleFiles, ".counts.txt")
+
+# Check that filenames match metadata Run IDs
+stopifnot(all(sampleNames %in% meta$Run))
+
+# Build sampleTable for DESeq2
+sampleTable <- data.frame(
+  sampleName = meta$Run,
+  fileName   = paste0(meta$Run, ".counts.txt"),
+  time       = factor(meta$time),
+  treatment  = factor(meta$treatment),
+  age_group  = factor(meta$age_group)
+)
+
+head(sampleTable)
+
+#----------------------------------------------------------
+# 3. Construct DESeq2 dataset
+#   Design: treatment effect (SARS-CoV-2 vs PBS)
+#----------------------------------------------------------
+
+dds <- DESeqDataSetFromHTSeqCount(
+  sampleTable = sampleTable,
+  directory   = count_dir,
+  design      = ~ treatment
+)
+
+# Filter out genes with very low counts
+dds <- dds[rowSums(counts(dds)) > 10, ]
+
+# Run DESeq2
+dds <- DESeq(dds)
+
+#----------------------------------------------------------
+# 4. Results for SARS-CoV-2 vs PBS
+#----------------------------------------------------------
+
+res <- results(dds, contrast=c("treatment","SARS-CoV-2","PBS"))
+summary(res)
+
+# Order by smallest padj
+res_ordered <- res[order(res$padj), ]
+head(res_ordered)
+
+# Save full results table
+write.csv(as.data.frame(res_ordered),
+          "ferret_DESeq2_results.csv",
+          row.names=TRUE)
+
+#----------------------------------------------------------
+# 5. Variance-stabilized data for PCA & heatmap
+#----------------------------------------------------------
+
+vsd <- vst(dds)
+
+# PCA plot
+pca_data <- plotPCA(vsd, intgroup=c("treatment","time"), returnData=TRUE)
+percentVar <- round(100 * attr(pca_data, "percentVar"))
+
+```
+
+## Introduction
+
+SARS-CoV-2 infection triggers a strong antiviral immune response, but the ways these responses vary across tissues and over the course of infection remain an important area of study. Animal models such as ferrets are widely used because their respiratory physiology and viral infection patterns resemble those of humans. Kim et al. (2022) generated an RNA-seq dataset to characterize how gene expression in ferret lung tissue changes over time following experimental SARS-CoV-2 infection. Their goal was to identify which host pathways become activated or suppressed during early, middle, and late infection stages.[@kim2022]
+
+The purpose of my project was to reproduce the core analyses of this study using publicly available raw sequencing data (BioProject **GSE189619**) and to evaluate whether my independently generated results align with the published findings. This involved downloading the raw FASTQ files, completing a full RNA-seq pipeline (QC, alignment, quantification, differential expression analysis), and performing functional enrichment to interpret biological meaning. By re-analyzing this dataset, I aimed to validate the authors’ key conclusions and gain hands-on experience running a complete RNA-seq workflow.
+
+## Methods
+
+All raw sequencing files were downloaded from the Sequence Read Archive (SRA; BioProject GSE189619). The dataset consists of paired-end Illumina NovaSeq reads from ferret lung tissue sampled at four infection time points (uninfected/PBS, 2 dpi, 5 dpi, and 14 dpi), with multiple biological replicates per group.
+
+#### Reference genome
+
+The ferret reference genome (MusPutFur1.0) and GTF annotation were downloaded from Ensembl (MusPutFur1.0 release 115). A HISAT2 index was built using hisat2-build v2.2.1[@kim2019].
+
+#### Quality control
+
+Quality control was performed using FastQC v0.12.1 [@fastqc] and summarized using MultiQC v1.15[@ewels2016]. QC metrics included read quality profiles, adapter contamination checks, duplication levels, GC content, and overrepresented sequences.
+
+#### Read alignment
+
+Reads were aligned to the ferret genome using HISAT2 v2.2.1 with the RNA-seq–appropriate options (--dta, --rna-strandness RF). Samtools v1.20 [@li2009a] was used to convert SAM → sorted BAM and create BAM indexes.
+
+#### Quantification
+
+Read counts per gene were generated using HTSeq-count v0.13.5[@anders2014], using the flags -s reverse, -t exon, and -i gene_id. One sample (SRR17047793) produced a zero-length count file and was removed from further analysis.
+
+#### Differential expression analysis
+
+A DESeq2 dataset was constructed in R (DESeq2 v1.50.2)[@love2014] using treatment (SARS-CoV-2 vs PBS) as the design factor. Genes with a total count ≤10 were filtered out. The model was fitted using DESeq2’s standard negative binomial framework with independent filtering enabled. Results include log2 fold changes, Wald test p-values, and FDR-adjusted p-values.
+
+#### Functional enrichment
+
+Ferret ENSEMBL gene IDs were mapped to human orthologs using biomaRt (mpfuro_gene_ensembl → hsapiens_gene_ensembl). Gene Ontology (BP) and Reactome pathway enrichment were performed using clusterProfiler v4.18.2 [@yu2012] and ReactomePA v1.54.0 [@yu2016].
+
+All scripts, SLURM jobs, and outputs were organized in a reproducible project directory on the UConn Xanadu cluster.
+
+## Results
+
+#### Quality control
+
+Overall, the dataset showed excellent sequencing quality across samples. Per-base Phred scores remained high throughout the entire read length, with no evidence of systemic quality drop-off. Per-sequence quality scores were tightly clustered in the high-quality range, indicating minimal degradation or technical issues. GC-content profiles showed the expected unimodal distribution for ferret lung RNA-seq, and no abnormal shifts were detected.
+
+FastQC also reported low levels of overrepresented sequences and minimal adapter contamination, suggesting clean library preparation. Duplicate read levels were moderate, which is typical for high-depth mammalian RNA-seq datasets. Per-base N content was close to zero for nearly all reads, further supporting strong data quality. MultiQC’s summary heatmap showed mostly “pass” or “warn” statuses, with no critical failures.
+
+Sequencing depth was high and consistent, typically ranging from \~65–90 million reads per sample. Alignment quality was similarly strong: HISAT2 achieved \~80–86% alignment across all samples, which is in line with published mammalian RNA-seq datasets. The only notable issue was one sample, SRR17047793, which produced a corrupted 0-byte HTSeq file and was therefore removed from downstream analyses. Apart from this single failed sample, all remaining files passed QC and were suitable for differential expression analysis.
+
+#### Exploratory data structure
+
+A variance-stabilizing transformation (VST) was applied prior to PCA. The PCA plot showed clear separation between infected and uninfected samples along PC1, with earlier infection (2–5 dpi) shifting strongly in the SARS-CoV-2 direction. Replicates clustered tightly by group, indicating good batch consistency and no outlier samples after removing SRR17047793.
+
+```{r}
+#| echo: false
+library(ggplot2)
+ggplot(pca_data, aes(PC1, PC2, color=treatment, shape=time)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  ggtitle("PCA of Ferret Lung RNA-Seq Samples") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 16))
+```
+
+A heatmap of the top 50 most variable genes revealed strong grouping by infection time point and treatment, consistent with global immune activation and transcriptomic remodeling.
+
+```{r}
+#| echo: false
+rv <- rowVars(assay(vsd))
+top50 <- order(rv, decreasing=TRUE)[1:50]
+
+heat_anno <- data.frame(
+  treatment = colData(dds)$treatment,
+  time      = colData(dds)$time
+)
+rownames(heat_anno) <- colnames(dds)
+
+pheatmap(
+  assay(vsd)[top50,],
+  annotation_col = heat_anno,
+  show_rownames = FALSE,
+  fontsize_row = 6,
+  fontsize_col = 8,
+  main="Top 50 Most Variable Genes"
+)
+```
+
+#### Differential expression
+
+Out of 20,519 genes analyzed after filtering:
+
+-   7,250 genes were significantly differentially expressed (padj \< 0.05)
+
+-   1,873 genes had \|log2FC\| \> 1 and padj \< 0.05
+
+-   Top DEGs included strong antiviral/immune genes with very large fold changes (e.g., IFIT, OAS, ISG family members).
+
+    These results show a widespread transcriptional response to SARS-CoV-2 infection.
+
+##### Top 10 Most Significant Differentially Expressed Genes
+
+| baseMean   | log2FoldChange | lfcSE     | stat      | pvalue   | padj     |
+|------------|----------------|-----------|-----------|----------|----------|
+| 4617.6579  | -11.663121     | 0.6691974 | -17.42852 | 5.01e-68 | 1.03e-63 |
+| 2073.5904  | -6.439517      | 0.4360975 | -14.76623 | 2.42e-49 | 2.48e-45 |
+| 113.2233   | -4.219457      | 0.3003445 | -14.04873 | 7.84e-45 | 5.36e-41 |
+| 6991.1325  | 4.207008       | 0.3020848 | 13.92658  | 4.37e-44 | 2.24e-40 |
+| 203.5619   | -2.393009      | 0.1797403 | -13.31370 | 1.93e-40 | 7.91e-37 |
+| 181.8617   | -1.462775      | 0.1119156 | -13.07033 | 4.87e-39 | 1.66e-35 |
+| 205.3869   | -2.819439      | 0.2212052 | -12.74581 | 3.29e-37 | 9.64e-34 |
+| 30418.2605 | -4.936639      | 0.3890061 | -12.69039 | 6.69e-37 | 1.71e-33 |
+| 591.9091   | -1.050462      | 0.0830917 | -12.64220 | 1.24e-36 | 2.82e-33 |
+| 33.2940    | -3.047907      | 0.2414841 | -12.62156 | 1.61e-36 | 3.30e-33 |
+
+The volcano plot below visualizes the magnitude and statistical significance of all transcriptional changes. Each point represents a gene, plotted by its log2 fold change (horizontal axis) and its –log10 adjusted p-value (vertical axis). Genes highlighted in red correspond to those with padj \< 0.05. The plot shows a broad distribution of significantly upregulated and downregulated genes, consistent with the large number of DEGs detected by DESeq2. Many genes exhibit large effect sizes (\> \|log2FC\| of 1), which aligns with the strong antiviral and interferon-stimulated gene responses described in the original study. The symmetric “wings” of significant genes indicate a well-balanced dataset without bias toward one direction of fold change, further supporting the robustness of the differential expression results.
+
+```{r}
+#| echo: false
+volcano <- as.data.frame(res)
+volcano$gene <- rownames(volcano)
+
+ggplot(volcano, aes(log2FoldChange, -log10(padj))) +
+  geom_point(aes(color = padj < 0.05), alpha=0.6) +
+  scale_color_manual(values=c("grey","red")) +
+  theme_minimal() +
+  labs(title="Volcano Plot: SARS-CoV-2 vs PBS")
+```
+
+```{r}
+#| include: false
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(enrichplot)
+library(ReactomePA)
+
+res_df <- as.data.frame(res)
+res_df$gene_id <- rownames(res_df)
+
+orth <- read.table("ferret_human_orthologs.tsv.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+
+orth_clean <- orth[, c("Gene.stable.ID",
+                       "Human.gene.stable.ID",
+                       "Human.gene.name")]
+
+colnames(orth_clean) <- c("ferret_id", "human_ensembl", "human_symbol")
+
+head(orth_clean)
+summary(orth_clean)
+
+res_annot <- merge(res_df, orth_clean,
+                   by.x = "gene_id", by.y = "ferret_id",
+                   all.x = TRUE)
+
+head(res_annot)
+dim(res_annot)
+
+# Add a cleaner confidence column
+orth$confidence <- as.numeric(orth$Human.orthology.confidence..0.low..1.high.)
+
+# Sort by ferret ID, then by confidence (high first)
+orth_sorted <- orth[order(orth$Gene.stable.ID, -orth$confidence), ]
+
+# Deduplicate by ferret gene ID
+orth_unique_full <- orth_sorted[!duplicated(orth_sorted$Gene.stable.ID), ]
+
+# Check size
+nrow(orth_unique_full)
+length(unique(orth_unique_full$Gene.stable.ID))
+
+orth_unique <- orth_unique_full[, c("Gene.stable.ID",
+                                    "Human.gene.stable.ID",
+                                    "Human.gene.name")]
+
+colnames(orth_unique) <- c("ferret_id", "human_ensembl", "human_symbol")
+
+head(orth_unique)
+nrow(orth_unique)
+
+res_annot <- merge(res_df, orth_unique,
+                   by.x = "gene_id", by.y = "ferret_id",
+                   all.x = TRUE)
+
+dim(res_annot)
+sum(is.na(res_annot$human_ensembl))
+sum(!is.na(res_annot$human_ensembl))
+
+sig_res <- subset(res_annot, padj < 0.05 & abs(log2FoldChange) > 1)
+
+# DE gene list (human Ensembl IDs)
+de_genes <- unique(sig_res$human_ensembl)
+
+# Background gene list (all human orthologs)
+bg_genes <- unique(res_annot$human_ensembl)
+
+length(de_genes)
+length(bg_genes)
+
+
+ego_bp <- enrichGO(
+  gene          = de_genes,
+  universe      = bg_genes,
+  OrgDb         = org.Hs.eg.db,
+  keyType       = "ENSEMBL",
+  ont           = "BP",
+  pAdjustMethod = "BH",
+  pvalueCutoff  = 0.05,
+  qvalueCutoff  = 0.2,
+  readable      = TRUE
+)
+
+head(as.data.frame(ego_bp))
+```
+
+#### Functional enrichment
+
+GO Biological Process enrichment showed highly significant activation of antiviral pathways, including:
+
+-   Defense response to virus
+
+-   Interferon alpha/beta signaling
+
+-   Negative regulation of viral genome replication
+
+-   Regulation of viral life cycle
+
+```{r}
+#| echo: false
+dotplot(ego_bp, showCategory = 15, title = "GO Biological Process Enrichment")
+```
+
+Reactome pathways were similarly dominated by interferon-driven immune responses, including:
+
+-   Interferon alpha/beta signaling
+
+-   Interferon gamma signaling
+
+-   ISG15 antiviral mechanism
+
+```{r}
+#| include: false
+gene_entrez <- bitr(de_genes,
+                    fromType = "ENSEMBL",
+                    toType = "ENTREZID",
+                    OrgDb = org.Hs.eg.db)
+
+bg_entrez <- bitr(bg_genes,
+                  fromType = "ENSEMBL",
+                  toType = "ENTREZID",
+                  OrgDb = org.Hs.eg.db)
+
+de_entrez <- unique(gene_entrez$ENTREZID)
+bg_entrez <- unique(bg_entrez$ENTREZID)
+
+reactome_res <- enrichPathway(
+  gene          = de_entrez,
+  universe      = bg_entrez,
+  organism      = "human",
+  pvalueCutoff  = 0.05,
+  pAdjustMethod = "BH",
+  qvalueCutoff  = 0.2,
+  readable      = TRUE
+)
+
+head(as.data.frame(reactome_res))
+```
+
+```{r}
+#| echo: false
+dotplot(reactome_res, showCategory = 15,
+        title = "Reactome Pathway Enrichment")
+```
+
+Together, these enrichment results are exactly what is expected during viral infection and strongly match the original publication.
+
+## Discussion
+
+The purpose of this analysis was to reproduce and explore the transcriptional response to SARS-CoV-2 infection in ferret lung tissue using publicly available RNA-seq data from Kim et al. (2022). Overall, the results of my workflow were highly consistent with the major biological conclusions presented in the original study, particularly the activation of antiviral and interferon-stimulated gene programs.
+
+My differential expression analysis identified 7,250 significantly regulated genes (padj \< 0.05), including more than 1,800 genes with strong expression changes (\|log2FC\| \> 1). Many of the top DEGs—such as ISG15, OAS1, and IFI6—were interferon-stimulated genes that the authors highlighted as core markers of the ferret antiviral response. This agreement suggests that my alignment, quantification, and DESeq2 pipeline effectively captured the expected biological signal.
+
+The dimensionality-reduction results further supported dataset quality. The PCA plot showed clear separation between SARS-CoV-2–infected ferrets and PBS controls, with samples also grouping by time point. This structured clustering indicates consistent biological effects across replicates and no obvious outlier samples. Similarly, the heatmap of the top 50 most variable genes demonstrated a strong division between infected and uninfected groups, mirroring the clustering patterns described in the manuscript.
+
+Functional enrichment produced results that aligned closely with published findings. GO Biological Process enrichment revealed strong over-representation of antiviral pathways, including defense response to virus, negative regulation of viral process, and viral genome replication. Reactome analysis highlighted Interferon alpha/beta signaling, Interferon gamma signaling, and ISG15 antiviral mechanisms, all of which are hallmark pathways of coronavirus infection and were emphasized by the authors. These enrichment patterns reinforce that the differential expression landscape detected in my analysis reflects biologically meaningful responses.
+
+One challenge encountered was the limited annotation available for Mustela putorius furo. Many databases do not directly support ferret gene identifiers, requiring an extra step in which ferret Ensembl IDs were mapped to human orthologs before enrichment. Although successful, this added complexity and explains why researchers frequently rely on human-ortholog annotations when analyzing ferret transcriptomes. Some tools (such as KEGG within clusterProfiler) do not support ferret at all, limiting the number of enrichment methods available.
+
+Although the goal of this project was primarily reproducibility, the analysis also suggested a possible new insight: the overall transcriptional impact of SARS-CoV-2 infection in ferret lungs may be broader than what was explicitly emphasized in the original manuscript. While Kim et al. focused on key innate-immune pathways, my analysis detected over 7,000 statistically significant DEGs, indicating a potentially wider-ranging disruption of gene expression. Additionally, Reactome enrichment revealed exceptionally strong significance for interferon-related pathways (adjusted p-values as low as \~2.7×10⁻¹⁴), which may offer an expanded or more systematic view of pathway-level responses than what was directly reported in the paper. These differences likely reflect updated annotations, the use of a modern DESeq2 pipeline, and a more extensive enrichment workflow rather than any contradiction of the published results.
+
+Despite annotation limitations, the core findings of the published study were successfully reproduced: SARS-CoV-2 infection induces a strong antiviral and interferon-mediated immune response in ferret lung tissue, with clear transcriptional separation between infected and control samples. The expanded analyses conducted here reinforce and extend those conclusions, demonstrating both the robustness of the dataset and the broader biological scope of the infection response.

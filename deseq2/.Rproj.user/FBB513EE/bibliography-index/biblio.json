@@ -1,0 +1,411 @@
+{
+    "sources": [
+        {
+            "DOI": "10.1093/bioinformatics/btp352",
+            "URL": "http://dx.doi.org/10.1093/bioinformatics/btp352",
+            "author": [
+                {
+                    "family": "Li",
+                    "given": "Heng"
+                },
+                {
+                    "family": "Handsaker",
+                    "given": "Bob"
+                },
+                {
+                    "family": "Wysoker",
+                    "given": "Alec"
+                },
+                {
+                    "family": "Fennell",
+                    "given": "Tim"
+                },
+                {
+                    "family": "Ruan",
+                    "given": "Jue"
+                },
+                {
+                    "family": "Homer",
+                    "given": "Nils"
+                },
+                {
+                    "family": "Marth",
+                    "given": "Gabor"
+                },
+                {
+                    "family": "Abecasis",
+                    "given": "Goncalo"
+                },
+                {
+                    "family": "Durbin",
+                    "given": "Richard"
+                }
+            ],
+            "container-title": "Bioinformatics",
+            "id": "li2009a",
+            "issue": "16",
+            "issued": {
+                "date-parts": [
+                    [
+                        2009,
+                        6,
+                        8
+                    ]
+                ]
+            },
+            "language": "en",
+            "page": "2078-2079",
+            "title": "The Sequence Alignment/Map format and SAMtools",
+            "type": "article-journal",
+            "volume": "25"
+        },
+        {
+            "DOI": "10.1093/bioinformatics/btu638",
+            "URL": "http://dx.doi.org/10.1093/bioinformatics/btu638",
+            "author": [
+                {
+                    "family": "Anders",
+                    "given": "Simon"
+                },
+                {
+                    "family": "Pyl",
+                    "given": "Paul Theodor"
+                },
+                {
+                    "family": "Huber",
+                    "given": "Wolfgang"
+                }
+            ],
+            "container-title": "Bioinformatics",
+            "id": "anders2014",
+            "issue": "2",
+            "issued": {
+                "date-parts": [
+                    [
+                        2014,
+                        9,
+                        25
+                    ]
+                ]
+            },
+            "language": "en",
+            "page": "166-169",
+            "title": "HTSeqa Python framework to work with high-throughput sequencing data",
+            "type": "article-journal",
+            "volume": "31"
+        },
+        {
+            "DOI": "10.1093/bioinformatics/btw354",
+            "URL": "http://dx.doi.org/10.1093/bioinformatics/btw354",
+            "author": [
+                {
+                    "family": "Ewels",
+                    "given": "Philip"
+                },
+                {
+                    "family": "Magnusson",
+                    "given": "Måns"
+                },
+                {
+                    "family": "Lundin",
+                    "given": "Sverker"
+                },
+                {
+                    "family": "Käller",
+                    "given": "Max"
+                }
+            ],
+            "container-title": "Bioinformatics",
+            "id": "ewels2016",
+            "issue": "19",
+            "issued": {
+                "date-parts": [
+                    [
+                        2016,
+                        6,
+                        16
+                    ]
+                ]
+            },
+            "language": "en",
+            "page": "3047-3048",
+            "title": "MultiQC: summarize analysis results for multiple tools and samples in a single report",
+            "title-short": "MultiQC",
+            "type": "article-journal",
+            "volume": "32"
+        },
+        {
+            "DOI": "10.1038/s41587-019-0201-4",
+            "URL": "http://dx.doi.org/10.1038/s41587-019-0201-4",
+            "author": [
+                {
+                    "family": "Kim",
+                    "given": "Daehwan"
+                },
+                {
+                    "family": "Paggi",
+                    "given": "Joseph M."
+                },
+                {
+                    "family": "Park",
+                    "given": "Chanhee"
+                },
+                {
+                    "family": "Bennett",
+                    "given": "Christopher"
+                },
+                {
+                    "family": "Salzberg",
+                    "given": "Steven L."
+                }
+            ],
+            "container-title": "Nature Biotechnology",
+            "id": "kim2019",
+            "issue": "8",
+            "issued": {
+                "date-parts": [
+                    [
+                        2019,
+                        8
+                    ]
+                ]
+            },
+            "language": "en",
+            "page": "907-915",
+            "title": "Graph-based genome alignment and genotyping with HISAT2 and HISAT-genotype",
+            "type": "article-journal",
+            "volume": "37"
+        },
+        {
+            "author": [
+                {
+                    "family": "Andrews",
+                    "given": "Simon"
+                }
+            ],
+            "id": "fastqc",
+            "issued": {
+                "date-parts": [
+                    [
+                        2010
+                    ]
+                ]
+            },
+            "note": "Babraham Bioinformatics",
+            "publisher": "https://www.bioinformatics.babraham.ac.uk/projects/fastqc/",
+            "title": "FastQC: A quality control tool for high throughput sequence data",
+            "title-short": "FastQC",
+            "type": ""
+        },
+        {
+            "DOI": "10.1038/s41467-021-27717-3",
+            "URL": "http://dx.doi.org/10.1038/s41467-021-27717-3",
+            "author": [
+                {
+                    "family": "Kim",
+                    "given": "Young-Il"
+                },
+                {
+                    "family": "Yu",
+                    "given": "Kwang-Min"
+                },
+                {
+                    "family": "Koh",
+                    "given": "June-Young"
+                },
+                {
+                    "family": "Kim",
+                    "given": "Eun-Ha"
+                },
+                {
+                    "family": "Kim",
+                    "given": "Se-Mi"
+                },
+                {
+                    "family": "Kim",
+                    "given": "Eun Ji"
+                },
+                {
+                    "family": "Casel",
+                    "given": "Mark Anthony B."
+                },
+                {
+                    "family": "Rollon",
+                    "given": "Rare"
+                },
+                {
+                    "family": "Jang",
+                    "given": "Seung-Gyu"
+                },
+                {
+                    "family": "Song",
+                    "given": "Min-Suk"
+                },
+                {
+                    "family": "Park",
+                    "given": "Su-Jin"
+                },
+                {
+                    "family": "Jeong",
+                    "given": "Hye Won"
+                },
+                {
+                    "family": "Kim",
+                    "given": "Eung-Gook"
+                },
+                {
+                    "family": "Lee",
+                    "given": "Ok-Jun"
+                },
+                {
+                    "family": "Kim",
+                    "given": "Yong-Dae"
+                },
+                {
+                    "family": "Choi",
+                    "given": "Younho"
+                },
+                {
+                    "family": "Lee",
+                    "given": "Shin-Ae"
+                },
+                {
+                    "family": "Choi",
+                    "given": "Youn Jung"
+                },
+                {
+                    "family": "Park",
+                    "given": "Su-Hyung"
+                },
+                {
+                    "family": "Jung",
+                    "given": "Jae U."
+                },
+                {
+                    "family": "Choi",
+                    "given": "Young Ki"
+                }
+            ],
+            "container-title": "Nature Communications",
+            "id": "kim2022",
+            "issue": "1",
+            "issued": {
+                "date-parts": [
+                    [
+                        2022,
+                        1,
+                        10
+                    ]
+                ]
+            },
+            "language": "en",
+            "title": "Age-dependent pathogenic characteristics of SARS-CoV-2 infection in ferrets",
+            "type": "article-journal",
+            "volume": "13"
+        },
+        {
+            "DOI": "10.1186/s13059-014-0550-8",
+            "URL": "http://dx.doi.org/10.1186/s13059-014-0550-8",
+            "author": [
+                {
+                    "family": "Love",
+                    "given": "Michael I"
+                },
+                {
+                    "family": "Huber",
+                    "given": "Wolfgang"
+                },
+                {
+                    "family": "Anders",
+                    "given": "Simon"
+                }
+            ],
+            "container-title": "Genome Biology",
+            "id": "love2014",
+            "issue": "12",
+            "issued": {
+                "date-parts": [
+                    [
+                        2014,
+                        12,
+                        5
+                    ]
+                ]
+            },
+            "language": "en",
+            "title": "Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2",
+            "type": "article-journal",
+            "volume": "15"
+        },
+        {
+            "DOI": "10.1089/omi.2011.0118",
+            "URL": "http://dx.doi.org/10.1089/omi.2011.0118",
+            "author": [
+                {
+                    "family": "Yu",
+                    "given": "Guangchuang"
+                },
+                {
+                    "family": "Wang",
+                    "given": "Li-Gen"
+                },
+                {
+                    "family": "Han",
+                    "given": "Yanyan"
+                },
+                {
+                    "family": "He",
+                    "given": "Qing-Yu"
+                }
+            ],
+            "container-title": "OMICS: A Journal of Integrative Biology",
+            "id": "yu2012",
+            "issue": "5",
+            "issued": {
+                "date-parts": [
+                    [
+                        2012,
+                        5
+                    ]
+                ]
+            },
+            "language": "en",
+            "page": "284-287",
+            "title": "clusterProfiler: an R Package for Comparing Biological Themes Among Gene Clusters",
+            "title-short": "clusterProfiler",
+            "type": "article-journal",
+            "volume": "16"
+        },
+        {
+            "DOI": "10.1039/c5mb00663e",
+            "URL": "http://dx.doi.org/10.1039/C5MB00663E",
+            "author": [
+                {
+                    "family": "Yu",
+                    "given": "Guangchuang"
+                },
+                {
+                    "family": "He",
+                    "given": "Qing-Yu"
+                }
+            ],
+            "container-title": "Molecular BioSystems",
+            "id": "yu2016",
+            "issue": "2",
+            "issued": {
+                "date-parts": [
+                    [
+                        2016
+                    ]
+                ]
+            },
+            "language": "en",
+            "page": "477-479",
+            "title": "ReactomePA: an R/Bioconductor package for reactome pathway analysis and visualization",
+            "title-short": "ReactomePA",
+            "type": "article-journal",
+            "volume": "12"
+        }
+    ],
+    "project_biblios": []
+}

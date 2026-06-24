@@ -1,0 +1,35 @@
+############################################################
+# 9. Pathway Enrichment Analysis (KEGG via clusterProfiler)
+############################################################
+library(clusterProfiler)
+
+# Use significant genes (padj < 0.05)
+sig_res <- res %>%
+  as.data.frame() %>%
+  filter(!is.na(padj)) %>%
+  filter(padj < 0.05)
+
+# KEGG requires ENTREZ IDs – use rownames (ferret ENS IDs)
+ferret_ids <- rownames(sig_res)
+
+# Run KEGG using the universal KEGG gene set (“ko”)
+kegg_res <- enrichKEGG(
+  gene         = ferret_ids,
+  organism     = "ko",     # KEGG universal database
+  pAdjustMethod = "BH",
+  qvalueCutoff = 0.1
+)
+
+# Save results
+write.csv(as.data.frame(kegg_res), "KEGG_enrichment_results.csv")
+
+# Plot top enriched pathways
+png("KEGG_dotplot.png", width=1200, height=900)
+dotplot(kegg_res, showCategory = 20) +
+  ggtitle("KEGG Pathway Enrichment — SARS-CoV-2 DEGs")
+dev.off()
+
+png("KEGG_barplot.png", width=1200, height=900)
+barplot(kegg_res, showCategory = 20) +
+  ggtitle("Top KEGG Pathways")
+dev.off()
